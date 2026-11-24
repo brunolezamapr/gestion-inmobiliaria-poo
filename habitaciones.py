@@ -1,5 +1,12 @@
 from abc import ABC,abstractmethod
 from descriptors import ValidarMedidaPositiva
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class EquipoElectrico:
+    nombre: str
+    consumo_watts: float
+
 
 class Habitacion(ABC):
 
@@ -9,7 +16,16 @@ class Habitacion(ABC):
 
         self.nombre = nombre
         self.metros_cuadrados = metros_cuadrados
+        self._equipos: list[EquipoElectrico] = []
 
+    def instalar_equipo(self,nombre:str,consumo_watts:float):
+        nuevo_equipo_electrico = EquipoElectrico(nombre,consumo_watts)
+        self._equipos.append(nuevo_equipo_electrico)
+
+    @property
+    def consumo_total_watts(self) -> float:
+        return sum(equipo.consumo_watts for equipo in self._equipos)
+        
     @abstractmethod
     def calcular_costo_mantenimiento(self) -> float:
         pass
