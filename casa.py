@@ -9,12 +9,13 @@ de colección mediante métodos dunder (`__len__`, `__getitem__`) y serializaci�
 
 import json
 from habitaciones import Habitacion, Sala, Cocina, Recamara
-from exceptions import HabitacionDuplicadaError,InmobiliariaError,CapacidadSuperadaError
-
+from exceptions import HabitacionDuplicadaError,CapacidadSuperadaError,CasaOcupadaError
+from personas import Inquilino
 class Casa:
     """
     Representa una propiedad inmobiliaria compuesta internamente por habitaciones.
     """
+
 
     def __init__(self, direccion: str,area_maxima:float=500.0):
         """
@@ -26,6 +27,8 @@ class Casa:
         self.direccion = direccion
         self._habitaciones: list[Habitacion] = []
         self.area_maxima = float(area_maxima)
+        self._inquilino: Inquilino | None = None
+
     # --- MÉTODOS CONSTRUCTORES INTERNOS (Composición Pura) ---
 
     def _validar_nueva_habitacion(self,nombre:str,metros:float) -> None:
@@ -44,7 +47,7 @@ class Casa:
         
     def construir_sala(
         self, nombre: str, metros: float, tiene_balcon: bool = False
-    ) -> None:
+    ) -> "Sala":
         """Instancia una `Sala` internamente y la incorpora a la casa."""
         self._validar_nueva_habitacion(nombre,metros)
         nueva_sala = Sala(nombre, metros, tiene_balcon)
@@ -53,7 +56,7 @@ class Casa:
 
     def construir_cocina(
         self, nombre: str, metros: float, es_integral: bool = True
-    ) -> None:
+    ) -> "Cocina":
         """Instancia una `Cocina` internamente y la incorpora a la casa."""
         self._validar_nueva_habitacion(nombre,metros)
         nueva_cocina = Cocina(nombre, metros, es_integral)
@@ -62,7 +65,7 @@ class Casa:
 
     def construir_recamara(
         self, nombre: str, metros: float, tiene_bano_privado: bool = False
-    ) -> None:
+    ) -> "Recamara":
         """Instancia una `Recamara` internamente y la incorpora a la casa."""
         self._validar_nueva_habitacion(nombre,metros)
         nueva_recamara = Recamara(nombre, metros, tiene_bano_privado)
@@ -70,10 +73,35 @@ class Casa:
         return nueva_recamara
     # --- PROPIEDADES CALCULADAS (@property) ---
 
+    
+
     @property
     def area_total(self) -> float:
         """Calcula dinámicamente la suma de metros cuadrados de todas las habitaciones."""
         return sum(hab.metros_cuadrados for hab in self._habitaciones)
+
+    @property
+    def esta_ocupada(self) -> bool:
+        return self._inquilino is not None
+    
+    @property
+    def inquilino(self):
+        return self._inquilino
+
+    @inquilino.setter
+    def inquilino(self,nuevo_inquilino:Inquilino):
+        if not isinstance(nuevo_inquilino,Inquilino):
+            raise  TypeError("la instancia no es de la clase Inquilino")
+
+        if self.esta_ocupada:
+            raise CasaOcupadaError()
+        self._inquilino = nuevo_inquilino
+
+    @inquilino.deleter
+    def inquilino(self) -> None:
+        if self._inquilino is None:
+            raise ValueError("La casa ya esta desocupada")
+        self._inquilino = None
 
     @property
     def costo_mantenimiento_mensual(self) -> float:
@@ -89,7 +117,6 @@ class Casa:
     def consumo_total_watts(self) -> float:
         return sum(hab.consumo_total_watts for hab in self._habitaciones)
 
-    # --- SERIALIZACIÓN A DISCO ---
     def guardar_planos_json(self, ruta_archivo: str) -> None:
         """Serializa la dirección y todas las habitaciones polimórficas a un archivo JSON."""
         dict_casa = {
@@ -98,6 +125,7 @@ class Casa:
             "costo_mantenimiento_mensual": self.costo_mantenimiento_mensual,
             "consumo_total_watts": self.consumo_total_watts,
             "habitaciones": [hab.to_dict() for hab in self._habitaciones],
+            "inquilino_actual": self._inquilino.nombre if self._inquilino else "Disponible"
         }
 
         with open(ruta_archivo, "w", encoding="utf-8") as f:
@@ -109,7 +137,6 @@ class Casa:
             raise TypeError("El argumento debe ser una subclase válida de Habitación")
         return [hab for hab in self._habitaciones if isinstance(hab,clase_habitacion)]
 
-    # --- PROTOCOLO DE COLECCIÓN Y REPRESENTACIÓN (Métodos Dunder) ---
 
     def __lt__(self, otra_casa:"Casa") -> bool:
         if not isinstance(otra_casa,Casa):
