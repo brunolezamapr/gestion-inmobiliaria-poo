@@ -2,12 +2,12 @@
 main.py - Suite de pruebas directas para el Sistema de Gestión Arquitectónica e Inmobiliaria (v2.0).
 Demuestra composición multinivel (Casa -> Habitacion -> EquipoElectrico),
 excepciones de dominio, filtrado polimórfico, sobrecarga de operadores y exportación JSON.
-"""
+ """
 
 from casa import Casa
 from habitaciones import Habitacion, Sala, Cocina, Recamara
-from exceptions import HabitacionDuplicadaError, CapacidadSuperadaError
-
+from exceptions import HabitacionDuplicadaError, CapacidadSuperadaError,CasaOcupadaError
+from personas import Inquilino
 print("=" * 70)
 print("1. CONSTRUCCIÓN DE CASA Y COMPOSICIÓN MULTINIVEL (EQUIPOS ELÉCTRICOS)")
 print("=" * 70)
@@ -20,6 +20,21 @@ sala = casa_reforma.construir_sala(nombre="Sala Principal", metros=30.0, tiene_b
 cocina = casa_reforma.construir_cocina(nombre="Cocina Integral", metros=18.0, es_integral=True)
 rec1 = casa_reforma.construir_recamara(nombre="Recámara Principal", metros=22.0, tiene_bano_privado=True)
 rec2 = casa_reforma.construir_recamara(nombre="Recámara de Visitas", metros=15.0, tiene_bano_privado=False)
+
+inquilino1 = Inquilino("Carlos Mendoza","CURP901215HDF")
+inquilino2 = Inquilino("Carlos Pérez","CURP901215HDF")
+
+casa_reforma.inquilino = inquilino1
+
+try:
+    casa_reforma.inquilino = inquilino2
+
+except CasaOcupadaError as err:
+    print("La casa ya esta ocupada")
+
+del casa_reforma.inquilino
+print(casa_reforma.esta_ocupada)
+print(inquilino1)
 
 # Instalamos equipos eléctricos dentro de cada habitación (Composición nivel 2)
 sala.instalar_equipo("Smart TV 65 OLED", 180.0)
