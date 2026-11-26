@@ -11,13 +11,15 @@ import json
 from habitaciones import Habitacion, Sala, Cocina, Recamara
 from exceptions import HabitacionDuplicadaError,CapacidadSuperadaError,CasaOcupadaError
 from personas import Inquilino
+from valuacion import EstrategiaRenta,RentaResidencial
+
 class Casa:
     """
     Representa una propiedad inmobiliaria compuesta internamente por habitaciones.
     """
 
 
-    def __init__(self, direccion: str,area_maxima:float=500.0):
+    def __init__(self, direccion: str,area_maxima:float=500.0,estrategia_renta: EstrategiaRenta | None = None):
         """
         Inicializa una casa vacía a partir de su dirección.
         Nota: No recibe objetos `Habitacion` externos para garantizar composición pura.
@@ -28,6 +30,7 @@ class Casa:
         self._habitaciones: list[Habitacion] = []
         self.area_maxima = float(area_maxima)
         self._inquilino: Inquilino | None = None
+        self.estrategia_renta = estrategia_renta or RentaResidencial()
 
     # --- MÉTODOS CONSTRUCTORES INTERNOS (Composición Pura) ---
 
@@ -72,6 +75,22 @@ class Casa:
         self._habitaciones.append(nueva_recamara)
         return nueva_recamara
     # --- PROPIEDADES CALCULADAS (@property) ---
+
+    @property
+    def renta_mensual(self) -> float:
+
+        return self._estrategia_renta.calcular_renta_mensual(self)
+
+    @property
+    def estrategia_renta(self) -> "EstrategiaRenta":
+
+        return self._estrategia_renta
+
+    @estrategia_renta.setter
+    def estrategia_renta(self,nueva_estrategia:EstrategiaRenta) -> None:
+        if not isinstance(nueva_estrategia,EstrategiaRenta):
+            raise TypeError("El parametro no es instancia de EstrategiaRenta")
+        self._estrategia_renta = nueva_estrategia
 
     
 
@@ -125,7 +144,9 @@ class Casa:
             "costo_mantenimiento_mensual": self.costo_mantenimiento_mensual,
             "consumo_total_watts": self.consumo_total_watts,
             "habitaciones": [hab.to_dict() for hab in self._habitaciones],
-            "inquilino_actual": self._inquilino.nombre if self._inquilino else "Disponible"
+            "inquilino_actual": self._inquilino.nombre if self._inquilino else "Disponible",
+            "tipo_valuacion": self._estrategia_renta.__class__.__name__ ,
+            "renta_mensual_estimada": self.renta_mensual
         }
 
         with open(ruta_archivo, "w", encoding="utf-8") as f:
