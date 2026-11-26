@@ -8,6 +8,7 @@ from casa import Casa
 from habitaciones import Habitacion, Sala, Cocina, Recamara
 from exceptions import HabitacionDuplicadaError, CapacidadSuperadaError,CasaOcupadaError
 from personas import Inquilino
+from valuacion import RentaComercial,RentaResidencial,EstrategiaRenta
 print("=" * 70)
 print("1. CONSTRUCCIÓN DE CASA Y COMPOSICIÓN MULTINIVEL (EQUIPOS ELÉCTRICOS)")
 print("=" * 70)
@@ -25,7 +26,9 @@ inquilino1 = Inquilino("Carlos Mendoza","CURP901215HDF")
 inquilino2 = Inquilino("Carlos Pérez","CURP901215HDF")
 
 casa_reforma.inquilino = inquilino1
-
+print(casa_reforma.renta_mensual)
+casa_reforma.estrategia_renta = RentaComercial()
+print(casa_reforma.renta_mensual)
 try:
     casa_reforma.inquilino = inquilino2
 
