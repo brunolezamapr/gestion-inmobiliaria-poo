@@ -12,7 +12,7 @@ from habitaciones import Habitacion, Sala, Cocina, Recamara
 from exceptions import HabitacionDuplicadaError,CapacidadSuperadaError,CasaOcupadaError
 from personas import Inquilino
 from valuacion import EstrategiaRenta,RentaResidencial
-
+from contratos import ContratoRenta
 class Casa:
     """
     Representa una propiedad inmobiliaria compuesta internamente por habitaciones.
@@ -31,6 +31,7 @@ class Casa:
         self.area_maxima = float(area_maxima)
         self._inquilino: Inquilino | None = None
         self.estrategia_renta = estrategia_renta or RentaResidencial()
+        self._historial_contratos: list[ContratoRenta] = []
 
     # --- MÉTODOS CONSTRUCTORES INTERNOS (Composición Pura) ---
 
@@ -91,7 +92,6 @@ class Casa:
         if not isinstance(nueva_estrategia,EstrategiaRenta):
             raise TypeError("El parametro no es instancia de EstrategiaRenta")
         self._estrategia_renta = nueva_estrategia
-
     
 
     @property
@@ -159,6 +159,14 @@ class Casa:
         return [hab for hab in self._habitaciones if isinstance(hab,clase_habitacion)]
 
 
+    def firmar_contrato(self,folio:str,inquilino:Inquilino,meses_duracion:int,
+                        deposito_garantia:float) -> ContratoRenta:
+        self.inquilino = inquilino
+        contrato = ContratoRenta.crear_desde_casa(folio,self,inquilino,meses_duracion,deposito_garantia)
+        self._historial_contratos.append(contrato)
+        return contrato
+    
+
     def __lt__(self, otra_casa:"Casa") -> bool:
         if not isinstance(otra_casa,Casa):
             return NotImplemented
@@ -181,3 +189,4 @@ class Casa:
             f"Casa(direccion='{self.direccion}', "
             f"habitaciones={len(self)}, area_total={self.area_total:.2f} m²)"
         )
+    
