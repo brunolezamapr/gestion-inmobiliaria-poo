@@ -9,6 +9,8 @@ from habitaciones import Habitacion, Sala, Cocina, Recamara
 from exceptions import HabitacionDuplicadaError, CapacidadSuperadaError,CasaOcupadaError
 from personas import Inquilino
 from valuacion import RentaComercial,RentaResidencial,EstrategiaRenta
+from condominio import Condominio,ProveedorMantenimiento
+
 print("=" * 70)
 print("1. CONSTRUCCIÓN DE CASA Y COMPOSICIÓN MULTINIVEL (EQUIPOS ELÉCTRICOS)")
 print("=" * 70)
@@ -120,3 +122,40 @@ archivo_json = "planos_casa_v2.json"
 casa_reforma.guardar_planos_json(archivo_json)
 print(f"[ÉXITO] Planos arquitectónicos y carga eléctrica guardados en '{archivo_json}'.")
 print("=" * 70)
+
+print("\n" + "=" * 70)
+print("6. CONDOMINIO: COMPOSICIÓN PURA VS. AGREGACIÓN DE PROVEEDORES Y CASAS")
+print("=" * 70)
+
+# 1. Crear proveedores externos (Agregación: nacen afuera de AreaComun)
+prov_aqua = ProveedorMantenimiento("AquaClean S.A.", "Mantenimiento de Albercas", 450.0)
+prov_gym = ProveedorMantenimiento("FitTech Pro", "Equipos de Gimnasio", 320.0)
+
+# 2. Instanciar Condominio y construir áreas comunes internamente (Composición pura)
+residencial = Condominio("Residencial Bosque Real", cuota_base_mantenimiento=250.0)
+alberca = residencial.construir_area_comun("Alberca Olímpica", capacidad_personas=40)
+gimnasio = residencial.construir_area_comun("Gimnasio Panorámico", capacidad_personas=25)
+
+# 3. Vincular proveedores mediante @proveedor.setter (Agregación)
+alberca.proveedor = prov_aqua
+gimnasio.proveedor = prov_gym
+
+print(f"Presupuesto mensual de áreas comunes: ${residencial.presupuesto_mensual_areas_comunes:,.2f}")
+
+# Desvincular proveedor con `del` (@proveedor.deleter): el objeto sigue vivo afuera
+del alberca.proveedor
+print(f"Tras cancelar contrato en alberca -> Presupuesto: ${residencial.presupuesto_mensual_areas_comunes:,.2f}")
+print(f"¿El proveedor externo sigue existiendo en memoria?: {prov_aqua}")
+
+# 4. Incorporar casas existentes al condominio (Agregación)
+residencial.incorporar_casa(casa_reforma)
+residencial.incorporar_casa(casa_grande)
+
+print(f"\nTotal de casas en el condominio (__len__): {len(residencial)}")
+print(f"Casas disponibles para rentar (@property): {len(residencial.casas_disponibles)}")
+
+# Desincorporar una casa y verificar que conserva sus habitaciones y equipos intactos
+casa_retirada = residencial.desincorporar_casa("Av. Paseo de la Reforma 450")
+print(f"Casa desincorporada: {casa_retirada} | Cuartos intactos: {len(casa_retirada)}")
+print(f"Casas restantes en el condominio: {len(residencial)}")
+
